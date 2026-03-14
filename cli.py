@@ -26,9 +26,9 @@ def parse_args() -> argparse.Namespace:
         help="Select k images similar to candidates from an input bucket folder.",
     )
     similar.add_argument("--k", required=True, type=_positive_int, help="Number of images to select.")
-    similar.add_argument("--candidates-folder", required=True, help="Candidate folder prefix.")
+    similar.add_argument("--candidates-folder", required=True, help="Local candidate images directory.")
     similar.add_argument("--input-folder", required=True, help="Input folder prefix in bucket.")
-    similar.add_argument("--output-folder", required=True, help="Destination folder prefix in bucket.")
+    similar.add_argument("--output-folder", required=True, help="Local output directory for downloaded matches.")
     similar.set_defaults(handler=cmd_select_similar)
 
     return parser.parse_args()
@@ -64,8 +64,8 @@ def cmd_select_similar(ctx: AppContext, args: argparse.Namespace) -> int:
         f"input-folder={args.input_folder} output-folder={args.output_folder} "
         f"bucket={ctx.cfg.bucket_name}"
     )
-    # TODO: Implement candidate embedding + nearest-neighbor retrieval.
-    return 0
+    from commnds.similar import similar
+    return similar(ctx, args)
 
 
 def main() -> int:
