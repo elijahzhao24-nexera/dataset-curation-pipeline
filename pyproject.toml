@@ -5,12 +5,27 @@ description = "CLI utilities for image ingestion, dedupe, and dataset curation."
 requires-python = ">=3.10"
 dependencies = [
   "boto3>=1.34.0",
-  "inference-sdk>=0.9.0",
   "numpy>=1.26.0",
   "Pillow>=10.0.0",
+  "pyDeprecate==0.4.0",
   "psycopg[binary]>=3.2.0",
   "psycopg_pool>=3.2.0",
+  "supervision==0.27.0.post1",
   "torch>=2.2.0",
   "torchvision>=0.17.0",
   "tqdm>=4.66.0",
 ]
+
+[project.optional-dependencies]
+roboflow-cpu = [
+  "inference==1.1.1",
+]
+roboflow-gpu = [
+  "inference-gpu==1.1.1",
+]
+roboflow-gpu-extras = [
+  "inference-gpu[gaze,sam,sam3,yolo-world]==1.1.1",
+]
+
+[tool.setuptools.packages.find]
+include = ["commnds*", "services*"]

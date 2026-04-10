@@ -58,6 +58,7 @@ def extract_dinov2_features_batch(
         raise ValueError("batch_size must be a positive integer.")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Embedding device: {device} (torch CUDA available={torch.cuda.is_available()})")
     model = torch.hub.load("facebookresearch/dinov2", model_name)
     model.eval()
     model.to(device)

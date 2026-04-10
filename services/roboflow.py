@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from typing import Any
 
@@ -30,6 +31,39 @@ class RoboflowPreprocessor:
         return roi_image
 
 
+_OPTIONAL_INFERENCE_MODEL_FLAGS = (
+    "CORE_MODEL_SAM_ENABLED",
+    "CORE_MODEL_SAM3_ENABLED",
+    "CORE_MODEL_GAZE_ENABLED",
+    "CORE_MODEL_YOLO_WORLD_ENABLED",
+)
+_CUDA_PROVIDER = "CUDAExecutionProvider"
+
+
+def _set_inference_optional_model_defaults() -> None:
+    for env_name in _OPTIONAL_INFERENCE_MODEL_FLAGS:
+        os.environ.setdefault(env_name, "False")
+
+
+def _log_onnx_runtime_provider_status() -> None:
+    try:
+        import onnxruntime as ort
+    except ImportError:
+        print("ONNX Runtime not importable. Install project extra `.[roboflow-gpu]` for CUDA support.")
+        return
+
+    providers = ort.get_available_providers()
+    if _CUDA_PROVIDER in providers:
+        print(f"ONNX Runtime providers: {providers} (CUDA enabled).")
+        return
+
+    print(
+        "ONNX Runtime providers: "
+        f"{providers} (CUDA unavailable). "
+        "Install project extra `.[roboflow-gpu]` and remove `inference` / `onnxruntime` CPU-only packages."
+    )
+
+
 def build_roboflow_preprocessor(
     roboflow_model_id: str,
     roboflow_api_key: str,
@@ -37,13 +71,17 @@ def build_roboflow_preprocessor(
     pad: int,
     bg: int,
 ) -> RoboflowPreprocessor:
+    _set_inference_optional_model_defaults()
+
     try:
         from inference import get_roboflow_model
     except ImportError as exc:
         raise RuntimeError(
-            "Roboflow preprocessing requires `inference-sdk`. Install with: pip install inference-sdk"
+            "Roboflow preprocessing requires Roboflow Inference. "
+            "Install with: pip install -e \".[roboflow-gpu]\" (or \".[roboflow-cpu]\")."
         ) from exc
 
+    _log_onnx_runtime_provider_status()
     model = get_roboflow_model(model_id=roboflow_model_id, api_key=roboflow_api_key)
     return RoboflowPreprocessor(model=model, class_name=class_name, pad=pad, bg=bg)
 

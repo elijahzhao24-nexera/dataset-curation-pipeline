@@ -66,18 +66,38 @@ def download_matches(
     s3_client,
     matches: list[tuple[int, str, str, float]],
     output_dir: str,
-    subdir: str = "similar_to_candidates",
 ) -> int:
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
     downloaded = 0
     for image_id, bucket, key, distance in matches:
-        local_path = Path(output_dir) / subdir / key
-        local_path.parent.mkdir(parents=True, exist_ok=True)
+        filename = Path(key).name
+        if not filename:
+            print(f"Warning: Could not extract filename from key: {key}. Skipping.")
+            continue
+
+        local_path = _build_unique_output_path(output_path, filename, int(image_id))
         print(
             f"Downloading id={image_id} dist={distance:.4f} s3://{bucket}/{key} -> {local_path}"
         )
         s3_client.download_file(bucket, key, str(local_path))
         downloaded += 1
     return downloaded
+
+
+def _build_unique_output_path(output_dir: Path, filename: str, image_id: int) -> Path:
+    candidate = output_dir / filename
+    if not candidate.exists():
+        return candidate
+
+    stem = candidate.stem
+    suffix = candidate.suffix
+    dedup_candidate = output_dir / f"{stem}_{image_id}{suffix}"
+    counter = 1
+    while dedup_candidate.exists():
+        dedup_candidate = output_dir / f"{stem}_{image_id}_{counter}{suffix}"
+        counter += 1
+    return dedup_candidate
 
 
 def similar(ctx: AppContext, args: argparse.Namespace) -> int:

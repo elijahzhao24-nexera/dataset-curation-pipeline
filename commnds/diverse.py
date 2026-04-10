@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import argparse
-import os
 import random
-from datetime import datetime
+from pathlib import Path
 
 import numpy as np
 
@@ -47,12 +46,12 @@ def download_s3_uri(
     output_dir: str,
     selected_ids: list[list[str | int]],
 ) -> int:
-    """selected [id, s3_uri] into timestamped local directory."""
-    base_directory = os.path.join(output_dir, datetime.now().strftime("%Y-%m-%d_%H:%M:%S"))
+    """Download selected [id, s3_uri] directly into output_dir (flat layout)."""
+    base_directory = Path(output_dir)
+    base_directory.mkdir(parents=True, exist_ok=True)
     downloaded = 0
 
     for image_id, s3_uri in selected_ids:
-        del image_id
         try:
             key_parts = str(s3_uri).split(f"s3://{bucket}/")
             if len(key_parts) < 2:
@@ -60,15 +59,34 @@ def download_s3_uri(
                 continue
 
             key = key_parts[1]
-            local_path = os.path.join(base_directory, key)
-            os.makedirs(os.path.dirname(local_path), exist_ok=True)
+            filename = Path(key).name
+            if not filename:
+                print(f"Warning: Could not extract filename from key: {key}. Skipping.")
+                continue
+
+            local_path = _build_unique_output_path(base_directory, filename, int(image_id))
             print(f"Downloading {s3_uri} -> {local_path}")
-            s3_client.download_file(bucket, key, local_path)
+            s3_client.download_file(bucket, key, str(local_path))
             downloaded += 1
         except Exception as exc:
             print(f"Error downloading {s3_uri}: {exc}")
 
     return downloaded
+
+
+def _build_unique_output_path(output_dir: Path, filename: str, image_id: int) -> Path:
+    candidate = output_dir / filename
+    if not candidate.exists():
+        return candidate
+
+    stem = candidate.stem
+    suffix = candidate.suffix
+    dedup_candidate = output_dir / f"{stem}_{image_id}{suffix}"
+    counter = 1
+    while dedup_candidate.exists():
+        dedup_candidate = output_dir / f"{stem}_{image_id}_{counter}{suffix}"
+        counter += 1
+    return dedup_candidate
 
 
 def diverse(ctx: AppContext, args: argparse.Namespace) -> int:

@@ -45,9 +45,7 @@ class Config:
             db_pool_max_size=int(os.getenv("DB_POOL_MAX_SIZE", "5")),
             dinov2_model=os.getenv("DINOV2_MODEL", "dinov2_vitb14"),
             batch_size=int(os.getenv("BATCH_SIZE", "32")),
-            use_bin_mask_for_embedding=_parse_bool(
-                _first_non_empty("USE_ROBOFLOW_PREPROCESS", "USE_BIN_MASK_FOR_EMBEDDING") or "false"
-            ),
+            use_bin_mask_for_embedding=_parse_bool(os.getenv("USE_BIN_MASK_FOR_EMBEDDING", "false")),
             roboflow_model_id=_first_non_empty("ROBOFLOW_MODEL_ID"),
             roboflow_api_key=_first_non_empty("ROBOFLOW_API_KEY"),
             roboflow_bin_class=os.getenv("ROBOFLOW_BIN_CLASS", "tote-bin"),
@@ -60,13 +58,11 @@ class Config:
         if cfg.use_bin_mask_for_embedding:
             if not cfg.roboflow_model_id:
                 raise RuntimeError(
-                    "ROBOFLOW_MODEL_ID is required when USE_ROBOFLOW_PREPROCESS=true "
-                    "(or USE_BIN_MASK_FOR_EMBEDDING=true)."
+                    "ROBOFLOW_MODEL_ID is required when USE_BIN_MASK_FOR_EMBEDDING=true."
                 )
             if not cfg.roboflow_api_key:
                 raise RuntimeError(
-                    "ROBOFLOW_API_KEY is required when USE_ROBOFLOW_PREPROCESS=true "
-                    "(or USE_BIN_MASK_FOR_EMBEDDING=true)."
+                    "ROBOFLOW_API_KEY is required when USE_BIN_MASK_FOR_EMBEDDING=true."
                 )
 
         return cfg

@@ -1,3 +1,5 @@
 .env
 __pycache__/
 *.pyc
+.venv
+dataset_curation_pipeline.egg-info
