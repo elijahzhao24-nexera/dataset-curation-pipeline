@@ -502,8 +502,7 @@ VALUES (%s, %s, %s, %s::vector)
 ON CONFLICT (s3_bucket, s3_key)
 DO UPDATE SET
   embedding_version = EXCLUDED.embedding_version,
-  embedding = EXCLUDED.embedding,
-  active = true;
+  embedding = EXCLUDED.embedding;
 """
 
 def insert_vector(cur, bucket, key, emb_norm):
@@ -676,13 +675,13 @@ def farthest_point_sampling(points: np.ndarray, k: int) -> np.ndarray:
 cur = conn.cursor()
 
 # 1)
-cur.execute("SELECT id, s3_uri, embedding FROM image_vectors;")
+cur.execute("SELECT id, s3_bucket, s3_key, embedding FROM image_vectors;")
 
 # 2)
 rows = cur.fetchall()
 ids = [row[0] for row in rows]
-s3_uris = [row[1] for row in rows]
-vectors = np.array([row[2] for row in rows])
+s3_uris = [f"s3://{row[1]}/{row[2]}" for row in rows]
+vectors = np.array([row[3] for row in rows])
 
 # 3 and 4)
 k_samples = 150

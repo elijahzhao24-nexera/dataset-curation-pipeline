@@ -12,11 +12,10 @@ ORDER BY embedding <=> %s::vector
 LIMIT %s;
 """
 
-NEAREST_K_BY_PREFIX_SQL = """
+NEAREST_K_BY_BUCKET_SQL = """
 SELECT id, s3_bucket, s3_key, (embedding <=> %s::vector) AS cosine_distance
 FROM public.image_vectors
 WHERE s3_bucket = %s
-  AND s3_key LIKE %s
 ORDER BY embedding <=> %s::vector
 LIMIT %s;
 """
@@ -27,15 +26,13 @@ VALUES (%s, %s, %s, %s::vector)
 ON CONFLICT (s3_bucket, s3_key)
 DO UPDATE SET
   embedding_version = EXCLUDED.embedding_version,
-  embedding = EXCLUDED.embedding,
-  active = true;
+  embedding = EXCLUDED.embedding;
 """
 
-FETCH_VECTORS_BY_PREFIX_SQL = """
+FETCH_VECTORS_BY_BUCKET_SQL = """
 SELECT id, s3_bucket, s3_key, embedding
 FROM public.image_vectors
 WHERE s3_bucket = %s
-  AND s3_key LIKE %s
 ORDER BY id;
 """
 
@@ -51,19 +48,16 @@ def find_nearest(cursor: Any, emb_norm: np.ndarray, k: int = 1) -> list[tuple[An
     return cursor.fetchall()
 
 
-def find_nearest_by_prefix(
+def find_nearest_by_bucket(
     cursor: Any,
     emb_norm: np.ndarray,
     bucket: str,
-    prefix: str,
     k: int,
 ) -> list[tuple[Any, ...]]:
     vector_literal = to_pgvector_literal(emb_norm)
-    normalized_prefix = prefix.strip("/")
-    like_pattern = "%" if not normalized_prefix else f"{normalized_prefix}/%"
     cursor.execute(
-        NEAREST_K_BY_PREFIX_SQL,
-        (vector_literal, bucket, like_pattern, vector_literal, k),
+        NEAREST_K_BY_BUCKET_SQL,
+        (vector_literal, bucket, vector_literal, k),
     )
     return cursor.fetchall()
 
@@ -85,12 +79,9 @@ def count_vectors(cursor: Any) -> int:
     return int(row[0]) if row else 0
 
 
-def fetch_vectors_by_prefix(
+def fetch_vectors_by_bucket(
     cursor: Any,
     bucket: str,
-    prefix: str,
 ) -> list[tuple[Any, ...]]:
-    normalized_prefix = prefix.strip("/")
-    like_pattern = "%" if not normalized_prefix else f"{normalized_prefix}/%"
-    cursor.execute(FETCH_VECTORS_BY_PREFIX_SQL, (bucket, like_pattern))
+    cursor.execute(FETCH_VECTORS_BY_BUCKET_SQL, (bucket,))
     return cursor.fetchall()

@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 
 from context import AppContext
-from db import fetch_vectors_by_prefix
+from db import fetch_vectors_by_bucket
 
 
 def _coerce_embedding(raw_embedding) -> np.ndarray:
@@ -90,28 +90,25 @@ def _build_unique_output_path(output_dir: Path, filename: str, image_id: int) ->
 
 
 def diverse(ctx: AppContext, args: argparse.Namespace) -> int:
-    input_prefix = args.input_folder.strip("/")
     output_dir = args.output_folder
     k_samples = args.k
 
     print("=" * 60)
     print("Select diverse images")
     print("author: Elijah Zhao")
-    print(f"Input folder (S3 prefix): {input_prefix}")
     print(f"Output directory (local): {output_dir}")
     print(f"S3 bucket: {ctx.cfg.bucket_name}")
     print("=" * 60)
 
     with ctx.db.connection() as conn:
         with conn.cursor() as cur:
-            rows = fetch_vectors_by_prefix(
+            rows = fetch_vectors_by_bucket(
                 cur,
                 bucket=ctx.cfg.bucket_name,
-                prefix=input_prefix,
             )
 
     if not rows:
-        print("No vectors found for input prefix.")
+        print("No vectors found for bucket.")
         return 1
 
     ids: list[int] = []
@@ -130,7 +127,7 @@ def diverse(ctx: AppContext, args: argparse.Namespace) -> int:
         vectors.append(emb)
 
     if not vectors:
-        print("No valid embeddings found for input prefix.")
+        print("No valid embeddings found for bucket.")
         return 1
 
     feature_matrix = np.stack(vectors, axis=0)

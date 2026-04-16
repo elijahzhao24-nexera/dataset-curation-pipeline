@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 
 from context import AppContext
-from db import find_nearest_by_prefix
+from db import find_nearest_by_bucket
 from services.embedding import extract_dinov2_features_batch, load_image_paths
 from services.roboflow import build_roboflow_preprocessor
 
@@ -19,7 +19,6 @@ def _l2_normalize(x: np.ndarray) -> np.ndarray:
 def retrieve_similar_images(
     ctx: AppContext,
     candidate_paths: list[Path],
-    input_prefix: str,
     k: int,
 ) -> list[tuple[int, str, str, float]]:
     preprocess_fn = None
@@ -51,11 +50,10 @@ def retrieve_similar_images(
 
     with ctx.db.connection() as conn:
         with conn.cursor() as cur:
-            rows = find_nearest_by_prefix(
+            rows = find_nearest_by_bucket(
                 cur,
                 emb_norm=query,
                 bucket=ctx.cfg.bucket_name,
-                prefix=input_prefix,
                 k=k,
             )
 
@@ -102,7 +100,6 @@ def _build_unique_output_path(output_dir: Path, filename: str, image_id: int) ->
 
 def similar(ctx: AppContext, args: argparse.Namespace) -> int:
     candidate_dir = Path(args.candidates_folder)
-    input_prefix = args.input_folder.strip("/")
     output_dir = args.output_folder
     k = args.k
 
@@ -110,7 +107,6 @@ def similar(ctx: AppContext, args: argparse.Namespace) -> int:
     print("Select similar images")
     print("author: Elijah Zhao")
     print(f"Candidates directory (local): {candidate_dir}")
-    print(f"Input folder (S3 prefix): {input_prefix}")
     print(f"Output directory (local): {output_dir}")
     print(f"S3 bucket: {ctx.cfg.bucket_name}")
     print("=" * 60)
@@ -119,7 +115,6 @@ def similar(ctx: AppContext, args: argparse.Namespace) -> int:
     matches = retrieve_similar_images(
         ctx=ctx,
         candidate_paths=candidate_paths,
-        input_prefix=input_prefix,
         k=k,
     )
 

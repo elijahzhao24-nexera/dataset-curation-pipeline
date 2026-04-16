@@ -1,6 +1,5 @@
 # Dataset curation pipeline + Targeted Dataset Retrieval
 
-
 A scalable pipeline for transforming large, noisy image datasets into high-quality training datasets using modern vision embeddings and vector similarity search.
 
 This system processes millions of images and removes duplicates and near-duplicates, and selects a **diverse subset of images** suitable for training machine learning models.
@@ -8,6 +7,16 @@ This system processes millions of images and removes duplicates and near-duplica
 In addition to filtering and sampling datasets, the pipeline also supports **targeted image retrieval**. This allows users to retrieve images from the dataset that are **semantically similar to a candidate image or folder of images.** This is useful when training models that require targeted examples of a specific object, environment, or failure cases.
 
 The pipeline leverages vision models like Meta AI's DINOv2, pgVector, and sampling algorithms used in machine learning infrastructure.
+
+# How to use
+
+How to set up the repo: [Repo and Database setup](SETUP.md).
+
+Admin provisioning/bootstrap: [Admin setup](SETUPadmin.md).
+
+Production ownership/access handoff: [Production handoff runbook](PROD_HANDOFF.md).
+
+How to use from CLI: [How to use](HOWTOUSE.md).
 
 # Problem Context
 
