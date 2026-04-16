@@ -19,6 +19,10 @@ Get these values from your admin/handoff docs:
 - `PGPASSWORD` (from NordPass/password sharer)
 - `PGHOST` 
 
+Optional Roboflow ID and keys:
+- `ROBOFLOW_MODEL_ID`
+- `ROBOFLOW_API_KEY`
+
 ## 2) Current Mode: IAM Access Keys
 
 Use your own IAM user key and secret from the IAM group. (get admin to make one for you, or use default one in nordpass)
