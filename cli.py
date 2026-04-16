@@ -10,24 +10,27 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Dataset curation pipeline CLI.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    ingest = subparsers.add_parser("ingest-folder", help="Ingest local folder into DB/S3.")
+    ingest = subparsers.add_parser(
+        "ingest-folder",
+        help="Ingest local folder into DB/S3 (stores keys at bucket root by filename).",
+    )
     ingest.add_argument("--input-dir", required=True, help="Local source image directory.")
-    ingest.add_argument("--output-folder", required=True, help="Destination folder prefix in bucket.")
     ingest.set_defaults(handler=cmd_ingest_folder)
 
-    diverse = subparsers.add_parser("select-diverse", help="Select k diverse images from bucket folder.")
+    diverse = subparsers.add_parser(
+        "select-diverse",
+        help="Select k diverse images from all vectors in configured bucket.",
+    )
     diverse.add_argument("--k", required=True, type=_positive_int, help="Number of images to select.")
-    diverse.add_argument("--input-folder", required=True, help="Input folder prefix in bucket.")
     diverse.add_argument("--output-folder", required=True, help="Local output directory for downloaded images.")
     diverse.set_defaults(handler=cmd_select_diverse)
 
     similar = subparsers.add_parser(
         "select-similar",
-        help="Select k images similar to candidates from an input bucket folder.",
+        help="Select k images similar to candidates from all vectors in configured bucket.",
     )
     similar.add_argument("--k", required=True, type=_positive_int, help="Number of images to select.")
     similar.add_argument("--candidates-folder", required=True, help="Local candidate images directory.")
-    similar.add_argument("--input-folder", required=True, help="Input folder prefix in bucket.")
     similar.add_argument("--output-folder", required=True, help="Local output directory for downloaded matches.")
     similar.set_defaults(handler=cmd_select_similar)
 
@@ -49,7 +52,7 @@ def cmd_ingest_folder(ctx: AppContext, args: argparse.Namespace) -> int:
 
 def cmd_select_diverse(ctx: AppContext, args: argparse.Namespace) -> int:
     print(
-        f"[select-diverse] k={args.k} input-folder={args.input_folder} output-folder={args.output_folder} "
+        f"[select-diverse] k={args.k} output-folder={args.output_folder} "
         f"bucket={ctx.cfg.bucket_name}"
     )
 
@@ -61,7 +64,7 @@ def cmd_select_diverse(ctx: AppContext, args: argparse.Namespace) -> int:
 def cmd_select_similar(ctx: AppContext, args: argparse.Namespace) -> int:
     print(
         f"[select-similar] k={args.k} candidates-folder={args.candidates_folder} "
-        f"input-folder={args.input_folder} output-folder={args.output_folder} "
+        f"output-folder={args.output_folder} "
         f"bucket={ctx.cfg.bucket_name}"
     )
     from commnds.similar import similar

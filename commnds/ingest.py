@@ -12,13 +12,11 @@ from services.storage import make_s3_key, upload_to_s3
 
 def ingest(ctx: AppContext, args: argparse.Namespace) -> int:
     input_dir = Path(args.input_dir)
-    output_prefix = args.output_folder.strip("/")
 
     print("=" * 60)
     print("Dataset ingest")
     print("author: Elijah Zhao")
     print(f"Input directory: {input_dir}")
-    print(f"Output prefix: {output_prefix}")
     print(f"S3 bucket: {ctx.cfg.bucket_name}")
     print("=" * 60)
 
@@ -75,7 +73,7 @@ def ingest(ctx: AppContext, args: argparse.Namespace) -> int:
                         skipped += 1
                         continue
 
-                    s3_key = make_s3_key(image_path, prefix=output_prefix)
+                    s3_key = make_s3_key(image_path)
                     upload_to_s3(ctx.s3, image_path, ctx.cfg.bucket_name, s3_key)
                     insert_vector(
                         cur,
